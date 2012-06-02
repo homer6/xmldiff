@@ -3,7 +3,7 @@
 # This file is released under the MIT license, see the COPYING file
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
-OPTIMIZATION?=-O2
+OPTIMIZATION?=-O0
 
 ifeq ($(uname_S),SunOS)
   CFLAGS?=-std=c99 -pedantic $(OPTIMIZATION) -Wall -W -D__EXTENSIONS__ -D_XPG6
@@ -22,19 +22,25 @@ INSTALL_BIN= $(PREFIX)/bin
 INSTALL= cp -pf
 
 SOURCE_DIR=./src/
+TEST_DIR=./test/
 BIN_DIR=./bin/
 
-OBJ = $(BIN_DIR)file.o $(BIN_DIR)token.o
+OBJ = $(BIN_DIR)file.o $(BIN_DIR)token.o $(BIN_DIR)error.o $(BIN_DIR)debug.o $(BIN_DIR)array.o
+TEST_OBJ = $(BIN_DIR)array_test.o
 
-PRGNAME = xmldiff
+PROGRAM_NAME = xmldiff
+TEST_PROGRAM_NAME = xmldiff_test
 
-all: xmldiff
+all: xmldiff xmldiff_test
 
 #$(BIN_DIR)file.o: $(SOURCE_DIR)file.c $(SOURCE_DIR)file.h
 #$(BIN_DIR)token.o: $(SOURCE_DIR)token.c $(SOURCE_DIR)token.h
 
 xmldiff: $(OBJ)
-	$(CC) -o $(PRGNAME) $(CCOPT) $(DEBUG) $(OBJ) $(CCLINK) $(SOURCE_DIR)main.c
+	$(CC) -o $(PROGRAM_NAME) $(CCOPT) $(DEBUG) $(OBJ) $(CCLINK) $(SOURCE_DIR)main.c
+
+xmldiff_test: $(OBJ) $(TEST_OBJ)
+	$(CC) -o $(TEST_PROGRAM_NAME) $(CCOPT) $(DEBUG) $(OBJ) $(TEST_OBJ) $(CCLINK) $(TEST_DIR)main.c
 
 #%.o: %.c
 #	$(CC) -c $(CFLAGS) $(DEBUG) $(COMPILE_TIME) -c $(input) -o $(output)
@@ -44,9 +50,20 @@ $(BIN_DIR)file.o:
 	
 $(BIN_DIR)token.o:
 	$(CC) $(CCOPT) $(DEBUG) $(CCLINK) -c $(SOURCE_DIR)token.c -o $(BIN_DIR)token.o
+	
+$(BIN_DIR)error.o:
+	$(CC) $(CCOPT) $(DEBUG) $(CCLINK) -c $(SOURCE_DIR)error.c -o $(BIN_DIR)error.o
+	
+$(BIN_DIR)debug.o:
+	$(CC) $(CCOPT) $(DEBUG) $(CCLINK) -c $(SOURCE_DIR)debug.c -o $(BIN_DIR)debug.o
+	
+$(BIN_DIR)array.o:
+	$(CC) $(CCOPT) $(DEBUG) $(CCLINK) -c $(SOURCE_DIR)array.c -o $(BIN_DIR)array.o
+	
+$(BIN_DIR)array_test.o:
+	$(CC) $(CCOPT) $(DEBUG) $(CCLINK) -c $(TEST_DIR)array_test.c -o $(BIN_DIR)array_test.o
 
-
-
+	
 clean:
 	rm -rf $(PRGNAME) $(BIN_DIR)*.o
 
