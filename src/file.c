@@ -1,9 +1,14 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "file.h"
 
 
 //gets the entire contents of the given (already open for reading) file as a string
 //caller must free the memory returned
 //exits(halts) the program on error
+
 char *file_get_contents( FILE *file ){
 
     char buffer[BUF_SIZE];
@@ -19,9 +24,8 @@ char *file_get_contents( FILE *file ){
         content[0] = '\0'; // make null-terminated
 
     size_t buffer_size;
-    while( !feof(file) ){
+    while( fgets(buffer, BUF_SIZE, file) ){
 
-        fgets( buffer, BUF_SIZE, file );
         char *old = content;
 
         //calculate the new size and make room for it

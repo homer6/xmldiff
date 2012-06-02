@@ -5,18 +5,6 @@
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 OPTIMIZATION?=-O2
 
-CCCOLOR="\033[34m"
-LINKCOLOR="\033[34;1m"
-SRCCOLOR="\033[33m"
-BINCOLOR="\033[37;1m"
-MAKECOLOR="\033[32;1m"
-ENDCOLOR="\033[0m"
-
-ifndef V
-QUIET_CC = @printf '    %b %b\n' $(CCCOLOR)CC$(ENDCOLOR) $(SRCCOLOR)$@$(ENDCOLOR);
-QUIET_LINK = @printf '    %b %b\n' $(LINKCOLOR)LINK$(ENDCOLOR) $(BINCOLOR)$@$(ENDCOLOR);
-endif
-
 ifeq ($(uname_S),SunOS)
   CFLAGS?=-std=c99 -pedantic $(OPTIMIZATION) -Wall -W -D__EXTENSIONS__ -D_XPG6
   CCLINK?=-ldl -lnsl -lsocket -lm -lpthread
@@ -33,36 +21,44 @@ PREFIX?=/usr/local
 INSTALL_BIN= $(PREFIX)/bin
 INSTALL= cp -pf
 
-OBJ = file.o token.o
+SOURCE_DIR=./src/
+BIN_DIR=./bin/
+
+OBJ = $(BIN_DIR)file.o $(BIN_DIR)token.o
 
 PRGNAME = xmldiff
 
 all: xmldiff
-    @echo ""
-    @echo "Hint: To run 'make test' is a good idea ;)"
-    @echo ""
 
-file.o: file.c file.h
-token.o: token.c token.h
+#$(BIN_DIR)file.o: $(SOURCE_DIR)file.c $(SOURCE_DIR)file.h
+#$(BIN_DIR)token.o: $(SOURCE_DIR)token.c $(SOURCE_DIR)token.h
 
 xmldiff: $(OBJ)
-    $(QUIET_LINK)$(CC) -o $(PRGNAME) $(CCOPT) $(DEBUG) $(OBJ) $(CCLINK)
+	$(CC) -o $(PRGNAME) $(CCOPT) $(DEBUG) $(OBJ) $(CCLINK) $(SOURCE_DIR)main.c
 
-%.o: %.c
-    $(QUIET_CC)$(CC) -c $(CFLAGS) $(DEBUG) $(COMPILE_TIME) $<
+#%.o: %.c
+#	$(CC) -c $(CFLAGS) $(DEBUG) $(COMPILE_TIME) -c $(input) -o $(output)
+
+$(BIN_DIR)file.o:
+	$(CC) $(CCOPT) $(DEBUG) $(CCLINK) -c $(SOURCE_DIR)file.c -o $(BIN_DIR)file.o
+	
+$(BIN_DIR)token.o:
+	$(CC) $(CCOPT) $(DEBUG) $(CCLINK) -c $(SOURCE_DIR)token.c -o $(BIN_DIR)token.o
+
+
 
 clean:
-    rm -rf $(PRGNAME) *.o
+	rm -rf $(PRGNAME) $(BIN_DIR)*.o
 
 log:
-    git log '--pretty=format:%ad %s (%cn)' --date=short > ../Changelog
+	git log '--pretty=format:%ad %s (%cn)' --date=short > ../Changelog
 
 gprof:
-    $(MAKE) PROF="-pg"
+	$(MAKE) PROF="-pg"
 
 gcov:
-    $(MAKE) PROF="-fprofile-arcs -ftest-coverage"
+	$(MAKE) PROF="-fprofile-arcs -ftest-coverage"
 
 install: all
-    mkdir -p $(INSTALL_BIN)
-    $(INSTALL) $(PRGNAME) $(INSTALL_BIN)
+	mkdir -p $(INSTALL_BIN)
+	$(INSTALL) $(PRGNAME) $(INSTALL_BIN)
