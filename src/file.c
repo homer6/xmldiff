@@ -6,14 +6,14 @@
 
 
 
-void file_get_contents( char **destination, FILE *file ){
+size_t file_get_contents( wide_char **destination, FILE *file ){
 
     char buffer[BUF_SIZE];
 
     //initialize the string that will be returned
         size_t content_size = 1; // includes NULL
         //initial size is the same as the buffer size
-        char *content = malloc( sizeof(char) * BUF_SIZE );
+        char *content = malloc( content_size );
         if( content == NULL ){
             perror( "Failed to allocate content" );
             exit( 1 );
@@ -49,6 +49,19 @@ void file_get_contents( char **destination, FILE *file ){
         exit( 3 );
     }
 
-    *destination = content;
+    //convert the mbstring to widecharacters
+        wide_char *temp_buffer = malloc( content_size * sizeof(wide_char) + 1 );
+        size_t number_of_characters = mbstowcs( temp_buffer, content, content_size );
+        if( number_of_characters == -1 ){
+            free( content );
+            free( temp_buffer );
+            perror( "Invalid multibyte character found." );
+            exit( 4 );
+        }
+
+    //cleanup and return
+        *destination = temp_buffer;
+        free( content );
+        return number_of_characters;
 
 }

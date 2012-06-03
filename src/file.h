@@ -4,12 +4,21 @@
 #define BUF_SIZE 1024
 
 
+typedef unsigned int wide_char;
+
+
+
+
 /**
  * Gets the entire contents of the given (already open for reading) file as a string.
- * Caller must free the memory returned
- * Exits(halts) the program on error
+ * The file contents may be any encoding, but they'll be converted to wide characters (4 bytes wide).
+ * Returns the number of wide characters. So the length allocated for the wide_char* is
+ * ( 4 bytes * number of characters + 1 null terminator ).
+ *
+ * Caller must free the memory returned.
+ * Exits(halts) the program on error.
  */
-void file_get_contents( char **destination, FILE *file );
+size_t file_get_contents( wide_char **destination, FILE *file );
 
 
 
