@@ -2,7 +2,10 @@
 #define XMLDIFF_TOKEN_H
 
 
-enum token_type{
+//see: http://www.w3.org/TR/xml11/
+
+enum token_type{   
+   TOKEN_TYPE_INVALID,
    TOKEN_TYPE_XML_DECLARATION,
    TOKEN_TYPE_TAG_OPEN,
    TOKEN_TYPE_TAG_CLOSE,

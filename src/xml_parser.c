@@ -29,10 +29,31 @@ void xml_parser_destroy( xml_parser *parser ){
 }
 
 
+
+
 static void xml_parser_tokenize_from_file( xml_parser *parser, FILE *file ){
 
+    //convert this to wide characters and convert to utf8 when outputting
+
+    char **string = malloc( sizeof(char*) );
+    file_get_contents( string, file );
 
 
+    size_t file_contents_length = strlen( *string );
+    size_t x = 0;
+
+
+    while( x < file_contents_length ){
+
+
+        x++;
+
+    }
+
+
+
+    free( *string );
+    free( string );
 
 }
 
