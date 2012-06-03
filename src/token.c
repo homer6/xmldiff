@@ -5,13 +5,7 @@
 #include "error.h"
 
 
-token *token_create( int type, const char *contents ){
-
-    token *token;
-    token = malloc( sizeof(token) );
-    if( token == NULL ){
-        error_fatal( "Could not allocate memory for token." );
-    }
+void token_create( token *token, int type, const char *contents ){
 
     size_t content_length = strlen( contents );
 
@@ -19,10 +13,9 @@ token *token_create( int type, const char *contents ){
     if( token->contents == NULL ){
         error_fatal( "Could not allocate memory for token contents." );
     }
+    strcpy( token->contents, contents );
 
     token->type = type;
-
-    return token;
 
 }
 
@@ -31,7 +24,6 @@ token *token_create( int type, const char *contents ){
 void token_destroy( token *token ){
 
     free( token->contents );
-    free( token );
 
 }
 

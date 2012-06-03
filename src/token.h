@@ -3,15 +3,15 @@
 
 
 enum token_type{
-   TOKEN_XML_DECLARATION,
-   TOKEN_TAG_OPEN,
-   TOKEN_TAG_CLOSE,
-   TOKEN_TAG_SELF_CLOSE,
-   TOKEN_TAG_NAME,
-   TOKEN_ATTRIBUTE_NAME,
-   TOKEN_ATTRIBUTE_EQUALS,
-   TOKEN_ATTRIBUTE_VALUE,
-   TOKEN_WHITESPACE
+   TOKEN_TYPE_XML_DECLARATION,
+   TOKEN_TYPE_TAG_OPEN,
+   TOKEN_TYPE_TAG_CLOSE,
+   TOKEN_TYPE_TAG_SELF_CLOSE,
+   TOKEN_TYPE_TAG_NAME,
+   TOKEN_TYPE_ATTRIBUTE_NAME,
+   TOKEN_TYPE_ATTRIBUTE_EQUALS,
+   TOKEN_TYPE_ATTRIBUTE_VALUE,
+   TOKEN_TYPE_WHITESPACE
 };
 
 
@@ -21,7 +21,7 @@ typedef struct token{
 }token;
 
 
-token *token_create( int type, const char *contents );
+void token_create( token *token, int type, const char *contents );
 void token_destroy( token *token );
 
 

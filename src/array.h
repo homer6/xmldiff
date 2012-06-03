@@ -3,7 +3,7 @@
 
 
 /**
- * An array is a generic linear store (void*) that resizes, if necessary.
+ * An array is a generic linear store (void*) that resizes automatically, if necessary.
  *
  * If an element destructor is provided to the constructor, the store assumes ownership
  * of the elements added
@@ -22,8 +22,8 @@ typedef struct array{
 }array;
 
 
-array *array_create( size_t element_size, size_t initial_allocated_size, void (*element_destructor)(void *element) );
-void array_destroy( array *token );
+void array_create( array *new_array, size_t element_size, size_t initial_allocated_size, void (*element_destructor)(void *element) );
+void array_destroy( array *array );
 
 
 /**
@@ -45,6 +45,19 @@ void array_add( array *array, void *element );
  * Returns 1 on success. Returns 0 on empty array (*element unmodified).
  */
 int array_pop( array *array, void *element );
+
+
+
+/**
+ * Resizes an array's allocated space to the new_size.
+ *
+ * This size must be greater than the current size.
+ */
+void array_resize( array *array, size_t new_size );
+
+
+
+
 
 
 

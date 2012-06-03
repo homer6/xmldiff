@@ -6,25 +6,17 @@
 
 
 
-array *array_create( size_t element_size, size_t initial_allocated_size, void (*element_destructor)(void *element) ){
+void array_create( array *array, size_t element_size, size_t initial_allocated_size, void (*element_destructor)(void *element) ){
 
-    array *new_array;
-    new_array = malloc( sizeof(array) );
-    if( new_array == NULL ){
-        error_fatal( "Could not allocate memory for array." );
-    }
-
-    new_array->elements = malloc( element_size * initial_allocated_size );
-    if( new_array->elements == NULL ){
+    array->elements = malloc( element_size * initial_allocated_size );
+    if( array->elements == NULL ){
         error_fatal( "Could not allocate memory for array elements." );
     }
 
-    new_array->element_size = element_size;
-    new_array->element_destructor = element_destructor;
-    new_array->logical_length = 0;
-    new_array->allocated_length = initial_allocated_size;
-
-    return new_array;
+    array->element_size = element_size;
+    array->element_destructor = element_destructor;
+    array->logical_length = 0;
+    array->allocated_length = initial_allocated_size;
 
 }
 
@@ -50,9 +42,14 @@ void array_destroy( array *array ){
 
 
 
-static void array_grow( array *array ){
+void array_resize( array *array, size_t new_size ){
 
-    array->allocated_length *= 2;
+    if( array->allocated_length >= new_size ){
+        error_fatal( "Could not resize array to be smaller or equal in size." );
+    }
+
+    array->allocated_length = new_size;
+
     array->elements = realloc( array->elements, array->allocated_length * array->element_size );
     if( array->elements == NULL ){
         error_fatal( "Could not reallocate memory for array elements." );
@@ -66,7 +63,8 @@ void array_add( array *array, void *element ){
 
     //allocate more memory, if needed
     if( array->logical_length == array->allocated_length ){
-        array_grow( array );
+        //double the size of the array
+        array_resize( array, array->allocated_length * 2 );
     }
 
     void *destination = (char*)array->elements + array->logical_length * array->element_size;

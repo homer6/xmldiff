@@ -25,8 +25,8 @@ SOURCE_DIR=./src/
 TEST_DIR=./test/
 BIN_DIR=./bin/
 
-OBJ = $(BIN_DIR)file.o $(BIN_DIR)token.o $(BIN_DIR)error.o $(BIN_DIR)debug.o $(BIN_DIR)array.o
-TEST_OBJ = $(BIN_DIR)array_test.o
+OBJ = $(BIN_DIR)file.o $(BIN_DIR)token.o $(BIN_DIR)error.o $(BIN_DIR)debug.o $(BIN_DIR)array.o $(BIN_DIR)xml_element.o $(BIN_DIR)xml_parser.o
+TEST_OBJ = $(BIN_DIR)array_test.o $(BIN_DIR)xml_element_test.o $(BIN_DIR)xml_parser_test.o
 
 PROGRAM_NAME = xmldiff
 TEST_PROGRAM_NAME = xmldiff_test
@@ -62,6 +62,20 @@ $(BIN_DIR)array.o:
 	
 $(BIN_DIR)array_test.o:
 	$(CC) $(CCOPT) $(DEBUG) $(CCLINK) -c $(TEST_DIR)array_test.c -o $(BIN_DIR)array_test.o
+	
+$(BIN_DIR)xml_element.o:
+	$(CC) $(CCOPT) $(DEBUG) $(CCLINK) -c $(SOURCE_DIR)xml_element.c -o $(BIN_DIR)xml_element.o
+	
+$(BIN_DIR)xml_element_test.o:
+	$(CC) $(CCOPT) $(DEBUG) $(CCLINK) -c $(TEST_DIR)xml_element_test.c -o $(BIN_DIR)xml_element_test.o
+	
+$(BIN_DIR)xml_parser.o:
+	$(CC) $(CCOPT) $(DEBUG) $(CCLINK) -c $(SOURCE_DIR)xml_parser.c -o $(BIN_DIR)xml_parser.o
+	
+$(BIN_DIR)xml_parser_test.o:
+	$(CC) $(CCOPT) $(DEBUG) $(CCLINK) -c $(TEST_DIR)xml_parser_test.c -o $(BIN_DIR)xml_parser_test.o
+	
+	
 
 	
 clean:
