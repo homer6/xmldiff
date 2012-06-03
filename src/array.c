@@ -36,7 +36,6 @@ void array_destroy( array *array ){
     }
 
     free( array->elements );
-    free( array );
 
 }
 

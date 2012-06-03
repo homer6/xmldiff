@@ -8,6 +8,7 @@
  * If an element destructor is provided to the constructor, the store assumes ownership
  * of the elements added
  *
+ * I'm calling this an array, but others might have called it a stack.
  */
 
 
@@ -22,7 +23,7 @@ typedef struct array{
 }array;
 
 
-void array_create( array *new_array, size_t element_size, size_t initial_allocated_size, void (*element_destructor)(void *element) );
+void array_create( array *array, size_t element_size, size_t initial_allocated_size, void (*element_destructor)(void *element) );
 void array_destroy( array *array );
 
 

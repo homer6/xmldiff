@@ -58,7 +58,7 @@ void array_run_tests(){
 
 
     //test the destructor
-        //array_destroy( &array );
+        array_destroy( &array );
 
 
 
