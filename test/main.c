@@ -3,6 +3,7 @@
 #include "array_test.h"
 #include "xml_element_test.h"
 #include "xml_parser_test.h"
+#include "file_test.h"
 
 
 //TEST executable
@@ -15,6 +16,7 @@ int main(){
     array_run_tests();
     xml_element_run_tests();
     xml_parser_run_tests();
+    file_run_tests();
 
     return 0;
 

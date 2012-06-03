@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "file.h"
+#include "xml_parser.h"
 
 
 //main executable
@@ -15,6 +15,10 @@ int main( int argc, char **argv ){
         return 0;
     }
 
+
+
+
+    /*
     FILE *left_file = fopen( argv[1], "rb" );
     char *left_file_contents = file_get_contents( left_file );
     fclose( left_file );
@@ -33,6 +37,7 @@ int main( int argc, char **argv ){
 
     free( left_file_contents );
     free( right_file_contents );
+    */
 
     return 0;
 

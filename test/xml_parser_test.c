@@ -16,6 +16,7 @@ static void delete_int( void *integer ){
 void xml_parser_run_tests(){
 
     printf( "Running tests for xml parser... " );
+    fflush( stdout );
 
     /*
 
@@ -48,5 +49,6 @@ void xml_parser_run_tests(){
 
 
     printf( "Done\n" );
+    fflush( stdout );
 
 }

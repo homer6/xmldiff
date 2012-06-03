@@ -5,11 +5,8 @@
 #include "file.h"
 
 
-//gets the entire contents of the given (already open for reading) file as a string
-//caller must free the memory returned
-//exits(halts) the program on error
 
-char *file_get_contents( FILE *file ){
+void file_get_contents( char **destination, FILE *file ){
 
     char buffer[BUF_SIZE];
 
@@ -52,6 +49,6 @@ char *file_get_contents( FILE *file ){
         exit( 3 );
     }
 
-    return content;
+    *destination = content;
 
 }
