@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 
 #include "file.h"
 
@@ -51,8 +52,10 @@ size_t file_get_contents( wide_char **destination, FILE *file ){
 
     //convert the mbstring to widecharacters
         wide_char *temp_buffer = malloc( content_size * sizeof(wide_char) + 1 );
+
+        setlocale(LC_ALL, "");
         size_t number_of_characters = mbstowcs( temp_buffer, content, content_size );
-        if( number_of_characters == -1 ){
+        if( number_of_characters == (size_t)-1 ){
             free( content );
             free( temp_buffer );
             perror( "Invalid multibyte character found." );

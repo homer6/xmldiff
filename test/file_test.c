@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
+#include <wchar.h>
 
 #include "file_test.h"
 
@@ -42,8 +43,8 @@ static void run_unicode_test(){
 
     //open the source file for reading and use "file_get_contents"
         FILE *file1 = fopen( source_filename, "r+" );
-        wide_char **string_ptr = malloc( sizeof(wide_char*) );
-        size_t number_of_characters = file_get_contents( string_ptr, file1 );
+        wide_char *string_ptr;
+        size_t number_of_characters = file_get_contents( &string_ptr, file1 );
         fclose( file1 );
 
     //open the destination file for writing and write the contents
@@ -52,14 +53,14 @@ static void run_unicode_test(){
             printf( "Could not open destination file for writing: %s", destination_filename );
             exit(5);
         }
-        fwrite( *string_ptr, sizeof(wide_char), number_of_characters, file2 );
+        fwrite( string_ptr, sizeof(wide_char), number_of_characters, file2 );
         fclose( file2 );
+        printf( "number of characters: %lu", number_of_characters );
 
     //ensure that it's the same as what I had put in
         //assert( strcmp(file_contents,*string_ptr) == 0 );
 
     //cleanup
-        free( *string_ptr );
         free( string_ptr );
 
 }

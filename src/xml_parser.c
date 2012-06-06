@@ -5,6 +5,7 @@
 #include "array.h"
 #include "token.h"
 #include "error.h"
+#include "file.h"
 
 
 static void free_token( void *token ){
@@ -35,11 +36,9 @@ static void xml_parser_tokenize_from_file( xml_parser *parser, FILE *file ){
 
     //convert this to wide characters and convert to utf8 when outputting
 
-    char **string = malloc( sizeof(char*) );
-    file_get_contents( string, file );
+    wide_char *string;
 
-
-    size_t file_contents_length = strlen( *string );
+    size_t file_contents_length = file_get_contents( &string, file );
     size_t x = 0;
 
 
@@ -51,8 +50,6 @@ static void xml_parser_tokenize_from_file( xml_parser *parser, FILE *file ){
     }
 
 
-
-    free( *string );
     free( string );
 
 }
@@ -65,7 +62,7 @@ void xml_parser_parse_from_file( xml_element *xml_element, xml_parser *parser, F
     xml_parser_tokenize_from_file( parser, file );
 
     token *current_token;
-    while( array_pop(&parser->tokens, current_token) ){
+    while( array_pop(&parser->tokens, &current_token) ){
 
         break;
 

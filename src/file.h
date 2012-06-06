@@ -4,7 +4,7 @@
 #define BUF_SIZE 1024
 
 
-typedef unsigned int wide_char;
+typedef signed int wide_char;
 
 
 
