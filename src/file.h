@@ -1,8 +1,10 @@
 #ifndef XMLDIFF_FILE_H
 #define XMLDIFF_FILE_H
 
-#define BUF_SIZE 1024
+#include <stdio.h>
 
+
+#define BUF_SIZE 1024
 
 typedef signed int wide_char;
 

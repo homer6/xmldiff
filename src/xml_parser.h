@@ -11,6 +11,9 @@
 
 typedef struct xml_parser{
     struct array tokens;
+    wide_char *current_position;
+    wide_char *end_of_file;
+    size_t file_contents_length;
 }xml_parser;
 
 

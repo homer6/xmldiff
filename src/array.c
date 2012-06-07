@@ -90,4 +90,12 @@ int array_pop( array *array, void *element ){
 
 
 
+size_t array_size( array *array ){
+
+    return array->logical_length;
+
+}
+
+
+
 

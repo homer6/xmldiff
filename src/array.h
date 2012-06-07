@@ -58,6 +58,14 @@ void array_resize( array *array, size_t new_size );
 
 
 
+/**
+ * Gets the size of an array.
+ *
+ */
+size_t array_size( array *array );
+
+
+
 
 
 
