@@ -17,6 +17,7 @@ typedef struct xml_parser{
 }xml_parser;
 
 
+
 void xml_parser_create( xml_parser *parser, size_t initial_token_array_size );
 void xml_parser_destroy( xml_parser *parser );
 

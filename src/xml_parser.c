@@ -53,7 +53,7 @@ static void add_token( xml_parser *parser, int token_type, wide_char* contents, 
 
 static int is_name_start_character( wide_char character ){
 
-    //invalid
+
     if( character == ':' ) return TRUE;
     if( character == '_' ) return TRUE;
     if( character >= 'A' && character <= 'Z' ) return TRUE;
@@ -137,21 +137,27 @@ static void match_whitespace( xml_parser *parser ){
 }
 
 
-static void match_name( xml_parser *parser ){
+/**
+ *
+ *
+ */
+static int lookahead_while( xml_parser *parser, int(*comparison_function)(wide_char), int *number_of_characters_found ){
 
-    size_t x = 1;
+    size_t x = 0;
     wide_char current_character;
+    unsigned char end_of_file_hit = 0;
 
     while(1){
 
         //detect end of file
         if( parser->current_position + x >= parser->end_of_file ){
+            end_of_file_hit = 1;
             break;
         }
 
         current_character = *(parser->current_position + x);
 
-        if( is_name_char_character(current_character) ){
+        if( comparison_function(current_character) ){
             x++;
         }else{
             break;
@@ -159,7 +165,37 @@ static void match_name( xml_parser *parser ){
 
     }
 
-    add_token( parser, TOKEN_TYPE_NAME, parser->current_position, x );
+    *number_of_characters_found = x;
+
+    if( end_of_file_hit ){
+        return 1; //error code #1
+    }else{
+        return 0; //no error
+    }
+
+}
+
+
+static void match_name( xml_parser *parser ){
+
+    int result, number_of_characters;
+
+    /*
+    if( result =  ){
+        //eof hit
+
+    }else{
+        //eof not hit
+
+    }*/
+    lookahead_while( parser, &is_name_char_character, &number_of_characters );
+
+    if( number_of_characters > 0 ){
+        add_token( parser, TOKEN_TYPE_NAME, parser->current_position, number_of_characters );
+    }else{
+        error_fatal( "Name not matched. Prediction failed." );
+    }
+
 
 }
 
@@ -174,6 +210,7 @@ static void xml_parser_tokenize_from_file( xml_parser *parser, FILE *file ){
         parser->file_contents_length = file_get_contents( &string, file );
 
 
+
     //skip over the BOM
         unsigned int *int_iterator = (unsigned int *)string;
         if( *int_iterator == 65279 ){
@@ -185,7 +222,7 @@ static void xml_parser_tokenize_from_file( xml_parser *parser, FILE *file ){
         parser->end_of_file = parser->current_position + parser->file_contents_length;
 
 
-    //predict each token
+    //predict and match each token
         wide_char current_character;
         while( parser->current_position < parser->end_of_file ){
 
@@ -229,6 +266,7 @@ void xml_parser_parse_from_file( xml_element *xml_element, xml_parser *parser, F
 
     printf( "There are %lu tokens.\n", array_size(&parser->tokens) );
 
+    /*
     token current_token;
     while( array_pop(&parser->tokens, &current_token) ){
 
@@ -239,12 +277,13 @@ void xml_parser_parse_from_file( xml_element *xml_element, xml_parser *parser, F
                 printf( "Token Whitespace\n" );
                 break;
 
-        };*/
+        };
 
         token_print( &current_token );
         token_destroy( &current_token );
 
     }
+    */
 
 
 }

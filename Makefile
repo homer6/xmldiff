@@ -3,16 +3,16 @@
 # This file is released under the MIT license, see the COPYING file
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
-OPTIMIZATION?=-O0
+OPTIMIZATION?=-O2
 
 ifeq ($(uname_S),SunOS)
   CFLAGS?=-std=c99 -pedantic $(OPTIMIZATION) -Wall -W -D__EXTENSIONS__ -D_XPG6
   CCLINK?=-ldl -lnsl -lsocket -lm -lpthread
-  DEBUG?=-g -ggdb
+  DEBUG?=-g -ggdb -pg
 else
   CFLAGS?=-std=c99 -pedantic $(OPTIMIZATION) -Wall -W $(ARCH) $(PROF)
   CCLINK?=-lm -pthread
-  DEBUG?=-g -rdynamic -ggdb
+  DEBUG?=-g -rdynamic -ggdb -pg
 endif
 
 CCOPT= $(CFLAGS) $(ARCH) $(PROF)
