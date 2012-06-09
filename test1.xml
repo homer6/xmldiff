@@ -1,2 +1,4 @@
 ﻿<?xml version="1.0">
-<one>two</one>
+<one>
+	<eight:two>three</eight:two>
+</one>

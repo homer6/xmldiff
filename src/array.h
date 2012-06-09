@@ -66,6 +66,19 @@ size_t array_size( array *array );
 
 
 
+/**
+ * Starting from the beginning of the array, iterates through each of the
+ * items and calls the supplied function. If any of the calls to
+ * visitor_function return -1, then the foreach loop will stop iterating
+ * and return the address of the element that it stopped at.
+ *
+ * If there are no elements in the array or none of the calls to
+ * visitor_function returned -1, this function will return NULL.
+ */
+void *array_foreach( array *array, int (*visitor_function)(void *) );
+
+
+
 
 
 

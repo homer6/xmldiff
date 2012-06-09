@@ -98,4 +98,28 @@ size_t array_size( array *array ){
 
 
 
+void *array_foreach( array *array, int (*visitor_function)(void *) ){
+
+    if( array->logical_length == 0 ){
+        return NULL;
+    }
+
+    size_t x;
+    void *current_element;
+
+    for( x = 0; x < array->logical_length; x++ ){
+
+        current_element = (char *)array->elements + array->element_size * x;
+        if( visitor_function(current_element) == -1 ){
+            return current_element;
+        }
+
+    }
+
+    return NULL;
+
+}
+
+
+
 

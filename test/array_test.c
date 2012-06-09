@@ -6,9 +6,34 @@
 #include "array_test.h"
 
 
+typedef struct person person;
+
+struct person{
+    int age;
+    char *first_name;
+    person *next_person;
+};
+
+
+
+static void delete_person_void( void *person ){
+
+
+
+}
+
+
+
 static void delete_int( void *integer ){
 
     free( (int*)integer );
+
+}
+
+static int foreach_test( void *integer ){
+
+    printf( "number: %d\n", *(int*)integer );
+    return 0;
 
 }
 
@@ -37,6 +62,9 @@ void array_run_tests(){
         assert( array.allocated_length == 16 );
 
 
+    //array foreach
+        array_foreach( &array, &foreach_test );
+
 
     //test array_pop
         int element;
@@ -48,7 +76,6 @@ void array_run_tests(){
         }
 
         assert( expected_elements_printed == elements_printed );
-
 
 
     //test array_resize
