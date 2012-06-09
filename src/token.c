@@ -10,21 +10,14 @@
 
 
 
-void token_create( token *token, int type, const wide_char *contents, size_t contents_length ){
+void token_create( token *token, int type, wide_char *start_position, size_t contents_length ){
 
     assert( contents_length > 0 );
 
-    //copy string contents (without a null terminator)
-        size_t allocated_size = contents_length * sizeof(wide_char);
-        token->contents = malloc( allocated_size );
-        if( token->contents == NULL ){
-            error_fatal( "Could not allocate memory for token contents." );
-        }
-        memcpy( token->contents, contents, allocated_size );
-
     //add the other members
         token->type = type;
-        token->contents_length = contents_length;
+        token->start_position = start_position;
+        token->end_position = start_position + contents_length;
 
 }
 
@@ -32,7 +25,8 @@ void token_create( token *token, int type, const wide_char *contents, size_t con
 
 void token_destroy( token *token ){
 
-    free( token->contents );
+    //to get rid of the compiler warning
+    token = token;
 
 }
 
@@ -41,7 +35,45 @@ void token_destroy( token *token ){
 void token_print( token *token ){
 
     printf( "Token: " );
-    fwrite( token->contents, sizeof(wide_char), token->contents_length, stdout );
+    char type_name[100];
+
+    switch( token->type ){
+
+        case TOKEN_TYPE_INVALID:
+            strcpy( type_name, "Invalid" );
+            break;
+
+        case TOKEN_TYPE_NAME:
+            strcpy( type_name, "Name" );
+            break;
+
+        case TOKEN_TYPE_WHITESPACE:
+            strcpy( type_name, "Whitespace" );
+            break;
+
+        case TOKEN_TYPE_LESS_THAN:
+            strcpy( type_name, "Less Than" );
+            break;
+
+        case TOKEN_TYPE_GREATER_THAN:
+            strcpy( type_name, "Greater Than" );
+            break;
+
+        case TOKEN_TYPE_UNKNOWN:
+            strcpy( type_name, "Unknown" );
+            break;
+
+        default:
+            strcpy( type_name, "Not listed in print function" );
+
+    };
+
+    printf( "type: %s  ", type_name );
+
+    printf( "\"" );
+    fwrite( token->start_position, sizeof(wide_char), token->end_position - token->start_position, stdout );
+    printf( "\"" );
+
     printf( "\n" );
 
 

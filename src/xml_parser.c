@@ -10,6 +10,7 @@
 
 
 
+
 static void free_token( void *token ){
 
     token_destroy( (struct token*)token );
@@ -28,11 +29,42 @@ void xml_parser_create( xml_parser *parser, size_t initial_token_array_size ){
 void xml_parser_destroy( xml_parser *parser ){
 
     array_destroy( &parser->tokens );
+    free( parser->file_contents );
 
 }
 
 
+static int lookahead_while( xml_parser *parser, int(*comparison_function)(wide_char), int *number_of_characters_found );
 
+
+/**
+ * Determines if the offset character from the current position matches the
+ * given character. Returns FALSE if the address is beyond the bounds of the
+ * file.
+ *
+ * @return bool
+ */
+static int match_character( xml_parser *parser, int offset, const wide_char character ){
+
+    wide_char *lookaround = parser->current_position + offset;
+
+    if( lookaround >= parser->end_of_file || lookaround < parser->file_contents ){
+        return -1;
+    }
+
+    if( character == *lookaround ){
+        return 1;
+    }
+
+    return 0;
+
+}
+
+
+/**
+ * Advances the current position by number_of_elements.
+ *
+ */
 static void consume( xml_parser *parser, size_t number_of_elements ){
 
     parser->current_position += number_of_elements;
@@ -40,10 +72,14 @@ static void consume( xml_parser *parser, size_t number_of_elements ){
 }
 
 
-static void add_token( xml_parser *parser, int token_type, wide_char* contents, size_t contents_length ){
+/**
+ * Adds a token of contents_length length and consumes those characters.
+ *
+ */
+static void add_token( xml_parser *parser, int token_type, wide_char* start_position, size_t contents_length ){
 
     token token;
-    token_create( &token, token_type, contents, contents_length );
+    token_create( &token, token_type, start_position, contents_length );
 
     array_add( &parser->tokens, &token );
     consume( parser, contents_length );
@@ -99,23 +135,26 @@ static int is_valid_character( wide_char character ){
     if( character >= 0xE && character <= 0xF ) return FALSE;
     if( character >= 0x7F && character <= 0x84 ) return FALSE;
     if( character >= 0x86 && character <= 0x9F ) return FALSE;
-    if( character >= 0xFDD0 && character <= 0xFDDF ) return FALSE;
-    if( character >= 0x1FFFE && character <= 0x1FFFF ) return FALSE;
-    if( character >= 0x2FFFE && character <= 0x2FFFF ) return FALSE;
-    if( character >= 0x3FFFE && character <= 0x3FFFF ) return FALSE;
-    if( character >= 0x4FFFE && character <= 0x4FFFF ) return FALSE;
-    if( character >= 0x5FFFE && character <= 0x5FFFF ) return FALSE;
-    if( character >= 0x6FFFE && character <= 0x6FFFF ) return FALSE;
-    if( character >= 0x7FFFE && character <= 0x7FFFF ) return FALSE;
-    if( character >= 0x8FFFE && character <= 0x8FFFF ) return FALSE;
-    if( character >= 0x9FFFE && character <= 0x9FFFF ) return FALSE;
-    if( character >= 0xAFFFE && character <= 0xAFFFF ) return FALSE;
-    if( character >= 0xBFFFE && character <= 0xBFFFF ) return FALSE;
-    if( character >= 0xCFFFE && character <= 0xCFFFF ) return FALSE;
-    if( character >= 0xDFFFE && character <= 0xDFFFF ) return FALSE;
-    if( character >= 0xEFFFE && character <= 0xEFFFF ) return FALSE;
-    if( character >= 0xFFFFE && character <= 0xFFFFF ) return FALSE;
-    if( character >= 0x10FFFE && character <= 0x10FFFF ) return FALSE;
+
+    if( character >= 0xFDD0 && character <= 0x10FFFF ){
+        if( character >= 0xFDD0 && character <= 0xFDDF ) return FALSE;
+        if( character >= 0x1FFFE && character <= 0x1FFFF ) return FALSE;
+        if( character >= 0x2FFFE && character <= 0x2FFFF ) return FALSE;
+        if( character >= 0x3FFFE && character <= 0x3FFFF ) return FALSE;
+        if( character >= 0x4FFFE && character <= 0x4FFFF ) return FALSE;
+        if( character >= 0x5FFFE && character <= 0x5FFFF ) return FALSE;
+        if( character >= 0x6FFFE && character <= 0x6FFFF ) return FALSE;
+        if( character >= 0x7FFFE && character <= 0x7FFFF ) return FALSE;
+        if( character >= 0x8FFFE && character <= 0x8FFFF ) return FALSE;
+        if( character >= 0x9FFFE && character <= 0x9FFFF ) return FALSE;
+        if( character >= 0xAFFFE && character <= 0xAFFFF ) return FALSE;
+        if( character >= 0xBFFFE && character <= 0xBFFFF ) return FALSE;
+        if( character >= 0xCFFFE && character <= 0xCFFFF ) return FALSE;
+        if( character >= 0xDFFFE && character <= 0xDFFFF ) return FALSE;
+        if( character >= 0xEFFFE && character <= 0xEFFFF ) return FALSE;
+        if( character >= 0xFFFFE && character <= 0xFFFFF ) return FALSE;
+        if( character >= 0x10FFFE && character <= 0x10FFFF ) return FALSE;
+    }
 
     //valid
     if( character >= 0x1 && character <= 0xD7FF ) return TRUE;
@@ -128,13 +167,70 @@ static int is_valid_character( wide_char character ){
 }
 
 
+static int is_whitespace( wide_char character ){
 
-
-static void match_whitespace( xml_parser *parser ){
-
-    add_token( parser, TOKEN_TYPE_WHITESPACE, parser->current_position, 1 );
+    if( character == ' ' || character == '\t' || character == '\n' || character == '\r' ) return TRUE;
+    return FALSE;
 
 }
+
+
+static int match_whitespace( xml_parser *parser ){
+
+    int number_of_characters;
+
+    lookahead_while( parser, &is_whitespace, &number_of_characters );
+
+    if( number_of_characters > 0 ){
+        add_token( parser, TOKEN_TYPE_WHITESPACE, parser->current_position, number_of_characters );
+        return TRUE;
+    }
+
+    return FALSE;
+
+}
+
+
+
+
+
+
+static int match_less_than( xml_parser *parser ){
+
+    if( match_character(parser, 0, '<') ){
+        add_token( parser, TOKEN_TYPE_LESS_THAN, parser->current_position, 1 );
+        return TRUE;
+    }
+    return FALSE;
+
+}
+
+
+static int match_greater_than( xml_parser *parser ){
+
+    if( match_character(parser, 0, '>') ){
+        add_token( parser, TOKEN_TYPE_GREATER_THAN, parser->current_position, 1 );
+        return TRUE;
+    }
+    return FALSE;
+
+}
+
+
+static int match_name( xml_parser *parser ){
+
+    int number_of_characters;
+
+    lookahead_while( parser, &is_name_char_character, &number_of_characters );
+
+    if( number_of_characters > 0 ){
+        add_token( parser, TOKEN_TYPE_NAME, parser->current_position, number_of_characters );
+        return TRUE;
+    }
+    return FALSE;
+
+}
+
 
 
 /**
@@ -176,53 +272,30 @@ static int lookahead_while( xml_parser *parser, int(*comparison_function)(wide_c
 }
 
 
-static void match_name( xml_parser *parser ){
-
-    int result, number_of_characters;
-
-    /*
-    if( result =  ){
-        //eof hit
-
-    }else{
-        //eof not hit
-
-    }*/
-    lookahead_while( parser, &is_name_char_character, &number_of_characters );
-
-    if( number_of_characters > 0 ){
-        add_token( parser, TOKEN_TYPE_NAME, parser->current_position, number_of_characters );
-    }else{
-        error_fatal( "Name not matched. Prediction failed." );
-    }
-
-
-}
-
-
 
 
 
 static void xml_parser_tokenize_from_file( xml_parser *parser, FILE *file ){
 
-    //convert this to wide characters and convert to utf8 when outputting (and get the size in number of characters)
-        wide_char *string;
-        parser->file_contents_length = file_get_contents( &string, file );
+
+    //convert this to wide characters (and get the size in number of characters)
+    //wide charactes are 4 bytes each
+    //make sure to convert to utf8 when outputting (later)
+        parser->file_contents_length = file_get_contents( &parser->file_contents, file );
 
 
-
-    //skip over the BOM
-        unsigned int *int_iterator = (unsigned int *)string;
+    //skip over the unicode BOM: http://en.wikipedia.org/wiki/Byte_order_mark
+        unsigned int *int_iterator = (unsigned int *)parser->file_contents;
         if( *int_iterator == 65279 ){
-            parser->current_position = string + 1;
+            parser->current_position = parser->file_contents + 1;
             parser->file_contents_length--;
         }else{
-            parser->current_position = string;
+            parser->current_position = parser->file_contents;
         }
         parser->end_of_file = parser->current_position + parser->file_contents_length;
 
 
-    //predict and match each token
+    //predict and match each token (tokenizing)
         wide_char current_character;
         while( parser->current_position < parser->end_of_file ){
 
@@ -234,25 +307,38 @@ static void xml_parser_tokenize_from_file( xml_parser *parser, FILE *file ){
                 case '\n':
                 case '\r':
                 case '\t':
-                    //match_whitespace( parser );
-                    consume( parser, 1 );
-                    continue;
+                    if( match_whitespace(parser) ) continue;
+                    break;
+
+                case '<':
+                    if( match_less_than(parser) ) continue;
+                    break;
+
+                case '>':
+                    if( match_greater_than(parser) ) continue;
+                    break;
 
 
             };
 
 
             if( is_name_start_character(current_character) ){
-                match_name( parser );
-                continue;
+
+                if( match_name(parser) ) continue;
+
             }
 
+            //TODO: fail on invalid character (or create UNKNOWN token)
+            //make sure to consume at least one or this loop will run forever
             consume( parser, 1 );
 
         }
 
 
-    free( string );
+    //predict and parse each pattern according to the parsing rules (parsing)
+    //each parse_* function will construct an AST node (or several) from
+    //the tokens that it uses to match to a rule
+
 
 }
 
@@ -266,24 +352,13 @@ void xml_parser_parse_from_file( xml_element *xml_element, xml_parser *parser, F
 
     printf( "There are %lu tokens.\n", array_size(&parser->tokens) );
 
-    /*
     token current_token;
     while( array_pop(&parser->tokens, &current_token) ){
-
-        /*
-        switch( current_token.type ){
-
-            case TOKEN_TYPE_WHITESPACE:
-                printf( "Token Whitespace\n" );
-                break;
-
-        };
 
         token_print( &current_token );
         token_destroy( &current_token );
 
     }
-    */
 
 
 }

@@ -3,7 +3,7 @@
 # This file is released under the MIT license, see the COPYING file
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
-OPTIMIZATION?=-O2
+OPTIMIZATION?=-O0
 
 ifeq ($(uname_S),SunOS)
   CFLAGS?=-std=c99 -pedantic $(OPTIMIZATION) -Wall -W -D__EXTENSIONS__ -D_XPG6
@@ -25,8 +25,8 @@ SOURCE_DIR=./src/
 TEST_DIR=./test/
 BIN_DIR=./bin/
 
-OBJ = $(BIN_DIR)token.o $(BIN_DIR)error.o $(BIN_DIR)debug.o $(BIN_DIR)array.o $(BIN_DIR)xml_element.o $(BIN_DIR)xml_parser.o $(BIN_DIR)file.o
-TEST_OBJ = $(BIN_DIR)array_test.o $(BIN_DIR)xml_element_test.o $(BIN_DIR)xml_parser_test.o $(BIN_DIR)file_test.o
+OBJ = $(BIN_DIR)token.o $(BIN_DIR)error.o $(BIN_DIR)debug.o $(BIN_DIR)array.o $(BIN_DIR)xml_element.o $(BIN_DIR)xml_parser.o $(BIN_DIR)file.o $(BIN_DIR)tree.o
+TEST_OBJ = $(BIN_DIR)array_test.o $(BIN_DIR)xml_element_test.o $(BIN_DIR)xml_parser_test.o $(BIN_DIR)file_test.o $(BIN_DIR)tree_test.o
 
 PROGRAM_NAME = xmldiff
 TEST_PROGRAM_NAME = xmldiff_test
@@ -84,6 +84,13 @@ $(BIN_DIR)file.o:
 	
 $(BIN_DIR)file_test.o:
 	$(CC) $(CCOPT) $(DEBUG) $(CCLINK) -c $(TEST_DIR)file_test.c -o $(BIN_DIR)file_test.o
+
+	
+$(BIN_DIR)tree.o:
+	$(CC) $(CCOPT) $(DEBUG) $(CCLINK) -c $(SOURCE_DIR)tree.c -o $(BIN_DIR)tree.o
+	
+$(BIN_DIR)tree_test.o:
+	$(CC) $(CCOPT) $(DEBUG) $(CCLINK) -c $(TEST_DIR)tree_test.c -o $(BIN_DIR)tree_test.o
 	
 	
 
