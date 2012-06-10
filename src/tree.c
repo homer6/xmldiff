@@ -5,16 +5,18 @@
 #include "error.h"
 
 
-static void tree_node_void_destroy( void* tree_node ){
+static void tree_node_child_destroy( void* tree_node ){
 
-    tree_node_destroy( *(struct tree_node**)tree_node );
+    struct tree_node *child = *(struct tree_node**)tree_node;
+    tree_node_destroy( child );
+    free( child );
 
 }
 
 
 void tree_node_create( tree_node *tree_node, void *item, void (*element_destructor)(void *) ){
 
-    array_create( &tree_node->children, sizeof(struct tree_node*), 10, &tree_node_void_destroy );
+    array_create( &tree_node->children, sizeof(struct tree_node*), 10, &tree_node_child_destroy );
     tree_node->item = item;
     tree_node->next_sibling = NULL;
     tree_node->previous_sibling = NULL;
@@ -88,6 +90,48 @@ tree_node *tree_node_get_child_at( tree_node *tree_node, size_t index ){
         current_element = (char *)tree_node->children.elements + tree_node->children.element_size * index;
         current_node = *(struct tree_node**)current_element;
         return current_node;
+
+    }
+
+    return NULL;
+
+}
+
+
+size_t tree_node_get_depth( tree_node *tree_node ){
+
+    size_t hops = 0;
+    struct tree_node *current_node = tree_node;
+
+    while( current_node->parent ){
+        current_node = current_node->parent;
+        hops++;
+    }
+
+    return hops;
+
+}
+
+
+tree_node *tree_node_visit_children( tree_node *tree_node, int (*visitor_function)(void *) ){
+
+    if( tree_node->children.logical_length == 0 ){
+        return NULL;
+    }
+
+    size_t x;
+    void *current_element;
+    struct tree_node *current_node;
+
+    for( x = 0; x < tree_node->children.logical_length; x++ ){
+
+        //could substitue tree_node_get_child_at here
+        current_element = (char *)tree_node->children.elements + tree_node->children.element_size * x;
+        current_node = *(struct tree_node**)current_element;
+
+        if( visitor_function(current_node) == -1 ){
+            return current_node;
+        }
 
     }
 

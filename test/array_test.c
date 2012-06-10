@@ -66,6 +66,13 @@ void array_run_tests(){
         array_foreach( &array, &foreach_test );
 
 
+    //array get
+        //get the third element
+        int *element2 = array_get_element_at( &array, 2 );
+        assert( element2 != NULL );
+        assert( *element2 == 3 );
+
+
     //test array_pop
         int element;
         int elements_printed = 0;

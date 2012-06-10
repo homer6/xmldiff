@@ -80,6 +80,12 @@ void *array_foreach( array *array, int (*visitor_function)(void *) );
 
 
 
+/**
+ * Gets a void * pointer to the element at the provided index.
+ * Returns NULL if not found.
+ *
+ */
+void *array_get_element_at( array *array, size_t index );
 
 
 

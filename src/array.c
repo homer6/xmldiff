@@ -6,7 +6,7 @@
 
 
 
-void array_create( array *array, size_t element_size, size_t initial_allocated_size, void (*element_destructor)(void *element) ){
+void array_create( array *array, size_t element_size, size_t initial_allocated_size, void (*element_destructor)(void *) ){
 
     array->elements = malloc( element_size * initial_allocated_size );
     if( array->elements == NULL ){
@@ -120,6 +120,19 @@ void *array_foreach( array *array, int (*visitor_function)(void *) ){
 
 }
 
+
+
+void *array_get_element_at( array *array, size_t index ){
+
+    if( index < array->logical_length ){
+
+        return (char *)array->elements + array->element_size * index;
+
+    }
+
+    return NULL;
+
+}
 
 
 

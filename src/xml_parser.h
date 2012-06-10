@@ -6,6 +6,7 @@
 #include "token.h"
 #include "array.h"
 #include "xml_element.h"
+#include "tree.h"
 
 
 
@@ -15,6 +16,9 @@ typedef struct xml_parser{
     wide_char *end_of_file;
     size_t file_contents_length;
     struct array tokens;
+    size_t current_token_index;
+    tree_node *ast_root_node;
+    tree_node *current_ast_node;
 }xml_parser;
 
 

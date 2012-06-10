@@ -17,10 +17,20 @@ static void free_token( void *token ){
 
 }
 
+static void xml_element_destory_void( void *element_location ){
+
+    xml_element *element = *(xml_element**)element_location;
+
+    xml_element_destroy( element );
+
+}
+
+
 
 void xml_parser_create( xml_parser *parser, size_t initial_token_array_size ){
 
     array_create( &parser->tokens, sizeof(token), initial_token_array_size, &free_token );
+    parser->ast_root_node = malloc( sizeof(tree_node) );
 
 }
 
@@ -30,6 +40,7 @@ void xml_parser_destroy( xml_parser *parser ){
 
     array_destroy( &parser->tokens );
     free( parser->file_contents );
+    tree_node_destroy( parser->ast_root_node );
 
 }
 
@@ -65,15 +76,25 @@ static int match_character( xml_parser *parser, int offset, const wide_char char
  * Advances the current position by number_of_elements.
  *
  */
-static void consume( xml_parser *parser, size_t number_of_elements ){
+static void consume_character( xml_parser *parser, size_t number_of_elements ){
 
     parser->current_position += number_of_elements;
 
 }
 
+/**
+ * Advances the current position by number_of_elements.
+ *
+ */
+static void consume_token( xml_parser *parser, size_t number_of_elements ){
+
+    parser->current_token_index += number_of_elements;
+
+}
+
 
 /**
- * Adds a token of contents_length length and consumes those characters.
+ * Adds a token of contents_length length and consume_characters those characters.
  *
  */
 static void add_token( xml_parser *parser, int token_type, wide_char* start_position, size_t contents_length ){
@@ -82,7 +103,7 @@ static void add_token( xml_parser *parser, int token_type, wide_char* start_posi
     token_create( &token, token_type, start_position, contents_length );
 
     array_add( &parser->tokens, &token );
-    consume( parser, contents_length );
+    consume_character( parser, contents_length );
 
 }
 
@@ -195,6 +216,22 @@ static int match_whitespace( xml_parser *parser ){
 
 
 
+static int match_end_tag_open( xml_parser *parser ){
+
+    if(
+        match_character( parser, 0, '<' ) &&
+        match_character( parser, 1, '/' )
+    ){
+        add_token( parser, TOKEN_TYPE_END_TAG_OPEN, parser->current_position, 2 );
+        return TRUE;
+    }
+    return FALSE;
+
+}
+
+
+
+
 static int match_less_than( xml_parser *parser ){
 
     if( match_character(parser, 0, '<') ){
@@ -272,6 +309,95 @@ static int lookahead_while( xml_parser *parser, int(*comparison_function)(wide_c
 }
 
 
+/**
+ * Determines if the offset token from the current position matches the
+ * given token type. Returns -1 if the address is beyond the bounds.
+ * Returns 1 if the types match. Returns 0 if there's no match.
+ *
+ */
+static int match_token_type( xml_parser *parser, int offset, int type ){
+
+    size_t lookaround_index = parser->current_token_index + offset;
+
+    token *lookaround_token = array_get_element_at( &parser->tokens, lookaround_index );
+
+    if( lookaround_token == NULL ){
+        return -1;
+    }
+
+    if( lookaround_token->type == type ){
+        return 1;
+    }
+
+    return 0;
+
+}
+
+
+/**
+  * Gets the token at the offset from the current_token_index.
+  * Returns NULL if not found.
+  *
+  */
+static token *get_token_at( xml_parser *parser, int offset ){
+
+    size_t lookaround_index = parser->current_token_index + offset;
+
+    return array_get_element_at( &parser->tokens, lookaround_index );
+
+}
+
+
+
+
+
+static int parse_element_start_tag( xml_parser *parser ){
+
+    if(
+        match_token_type(parser, 0, TOKEN_TYPE_LESS_THAN) &&
+        match_token_type(parser, 1, TOKEN_TYPE_NAME) &&
+        match_token_type(parser, 2, TOKEN_TYPE_GREATER_THAN)
+    ){
+        token *current_token = get_token_at( parser, 1 );
+
+        xml_element *element = malloc( sizeof(xml_element) );
+        xml_element_create( element, current_token->start_position, (unsigned char)(current_token->end_position - current_token->start_position) );
+
+        parser->current_ast_node = tree_node_add_last_child( parser->current_ast_node, element );
+        element->tree_node = parser->current_ast_node;
+
+        consume_token( parser, 3 );
+
+        return TRUE;
+    }
+
+    return FALSE;
+
+}
+
+
+static int parse_element_end_tag( xml_parser *parser ){
+
+    if(
+        match_token_type(parser, 0, TOKEN_TYPE_END_TAG_OPEN)
+    ){
+
+        if( parser->current_ast_node->parent == NULL ){
+            error_fatal( "Malformed XML. Too many close tags." );
+        }else{
+            parser->current_ast_node = parser->current_ast_node->parent;
+        }
+        consume_token( parser, 1 );
+
+        return TRUE;
+
+    }
+
+    return FALSE;
+
+}
+
+
 
 
 
@@ -295,7 +421,7 @@ static void xml_parser_tokenize_from_file( xml_parser *parser, FILE *file ){
         parser->end_of_file = parser->current_position + parser->file_contents_length;
 
 
-    //predict and match each token (tokenizing)
+    //Tokenizing: predict and match each token from the character stream
         wide_char current_character;
         while( parser->current_position < parser->end_of_file ){
 
@@ -311,7 +437,7 @@ static void xml_parser_tokenize_from_file( xml_parser *parser, FILE *file ){
                     break;
 
                 case '<':
-                    if( match_less_than(parser) ) continue;
+                    if( match_end_tag_open(parser) || match_less_than(parser) ) continue;
                     break;
 
                 case '>':
@@ -330,23 +456,102 @@ static void xml_parser_tokenize_from_file( xml_parser *parser, FILE *file ){
 
             //TODO: fail on invalid character (or create UNKNOWN token)
             //make sure to consume at least one or this loop will run forever
-            consume( parser, 1 );
+            consume_character( parser, 1 );
 
         }
 
 
-    //predict and parse each pattern according to the parsing rules (parsing)
+    //Parsing: predict and parse each pattern according to the parsing rules
     //each parse_* function will construct an AST node (or several) from
     //the tokens that it uses to match to a rule
+
+        token *current_token;
+        parser->current_token_index = 0;
+
+        xml_element *root_element = malloc( sizeof(xml_element) );
+        wide_char root_name[4] = { 'r', 'o', 'o', 't' };
+        xml_element_create( root_element, root_name, 4 );
+        tree_node_create( parser->ast_root_node, root_element, &xml_element_destory_void );
+        parser->current_ast_node = parser->ast_root_node;
+        root_element->tree_node = parser->ast_root_node;
+
+        /*
+        while( (current_token = array_get_element_at(&parser->tokens, parser->current_token_index)) ){
+
+            switch( current_token->type ){
+
+                case TOKEN_TYPE_WHITESPACE:
+                case TOKEN_TYPE_INVALID:
+                case TOKEN_TYPE_UNKNOWN:
+                    break;
+
+                case TOKEN_TYPE_LESS_THAN:
+                    if( parse_element_start_tag(parser) ) continue;
+                    break;
+
+                case TOKEN_TYPE_END_TAG_OPEN:
+                    if( parse_element_end_tag(parser) ) continue;
+                    break;
+
+            };
+
+            consume_token( parser, 1 );
+
+        }
+        */
 
 
 }
 
 
+static void print_xml_element( xml_element *element );
+
+static int print_xml_element_by_node( void *node ){
+
+    tree_node *tree_node = *(struct tree_node**)node;
+
+    xml_element *element = (xml_element*)tree_node->item;
+
+    print_xml_element( element );
+
+    return 0;
+
+}
+
+
+static void print_xml_element( xml_element *element ){
+
+    tree_node *node = element->tree_node;
+    size_t depth = tree_node_get_depth( node );
+
+    size_t x;
+    for( x = 0; x < depth; x++ ){
+        printf( "\t" );
+    }
+
+    //create a buffer for the utf-8 tag name and zero it out
+        size_t max_length = element->tag_name_length + 1;
+        size_t tag_name_length_in_bytes = max_length * sizeof(wide_char);
+        wide_char *tag_name = malloc( tag_name_length_in_bytes );
+        memset( tag_name, 0, tag_name_length_in_bytes );
+
+    //set the tag name (convert from wide characters to utf-8)
+        size_t num_characters_written;
+        num_characters_written = swprintf( tag_name, max_length, L"%s", element->tag_name );
+        tag_name[ element->tag_name_length ] = 0;
+
+    //locale must be set to utf-8 for this to work
+        printf("%d\n", num_characters_written );
+    wprintf( L"<%s>\n", tag_name );
+        tree_node_visit_children( node, &print_xml_element_by_node );
+    wprintf( L"</%s>\n", tag_name );
+
+    free( tag_name );
+
+}
+
 
 void xml_parser_parse_from_file( xml_element *xml_element, xml_parser *parser, FILE *file ){
-
-    xml_element_create( xml_element, "element_name" );
 
     xml_parser_tokenize_from_file( parser, file );
 
@@ -359,6 +564,10 @@ void xml_parser_parse_from_file( xml_element *xml_element, xml_parser *parser, F
         token_destroy( &current_token );
 
     }
+
+    xml_element = (struct xml_element*)(parser->ast_root_node->item);
+
+    print_xml_element( xml_element );
 
 
 }

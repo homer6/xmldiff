@@ -56,7 +56,7 @@ size_t tree_node_count_children( tree_node *tree_node );
  * stop.
  *
  */
-void tree_node_visit_children( tree_node *tree_node, int (*visitor_function)(void *) );
+tree_node *tree_node_visit_children( tree_node *tree_node, int (*visitor_function)(void *) );
 
 
 
@@ -92,6 +92,11 @@ tree_node *tree_node_visit_descendents_depth_first( tree_node *tree_node, int (*
 tree_node *tree_node_get_child_at( tree_node *tree_node, size_t index );
 
 
+/**
+ * Gets the number of hops to the tree root.
+ * So the root node would return 0.
+ */
+size_t tree_node_get_depth( tree_node *tree_node );
 
 
 

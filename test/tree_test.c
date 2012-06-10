@@ -49,19 +49,22 @@ void tree_run_tests(){
         int child_three = 90;
         int child_four = 100;
 
-        struct tree_node *current_node, *secondary_node;
+        struct tree_node *current_node, *second_node, *third_node;
 
         current_node = tree_node_get_child_at( &tree_node, 2 );
         tree_node_add_last_child( current_node, &child_two );
 
         current_node = tree_node_get_child_at( &tree_node, 7 );
-        secondary_node = tree_node_add_last_child( current_node, &child_three );
+        second_node = tree_node_add_last_child( current_node, &child_three );
 
-        tree_node_add_last_child( secondary_node, &child_four );
-
-
+        third_node = tree_node_add_last_child( second_node, &child_four );
 
 
+    //node depth
+        assert( tree_node_get_depth(third_node) == 3 );
+
+
+    //count children
         size_t number_of_children = tree_node_count_children(&tree_node);
         printf( "number of children: %lu\n", number_of_children );
         assert( number_of_children == 10 );
