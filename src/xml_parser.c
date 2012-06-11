@@ -31,6 +31,7 @@ void xml_parser_create( xml_parser *parser, size_t initial_token_array_size ){
 
     array_create( &parser->tokens, sizeof(token), initial_token_array_size, &free_token );
     parser->ast_root_node = malloc( sizeof(tree_node) );
+    parser->current_ast_node = NULL;
 
 }
 
@@ -363,8 +364,19 @@ static int parse_element_start_tag( xml_parser *parser ){
         xml_element *element = malloc( sizeof(xml_element) );
         xml_element_create( element, current_token->start_position, (unsigned char)(current_token->end_position - current_token->start_position) );
 
-        parser->current_ast_node = tree_node_add_last_child( parser->current_ast_node, element );
-        element->tree_node = parser->current_ast_node;
+        if( parser->current_ast_node == NULL ){
+            //this is the root element
+            tree_node_create( parser->ast_root_node, element, &xml_element_destory_void );
+            parser->current_ast_node = parser->ast_root_node;
+            element->tree_node = parser->ast_root_node;
+            //printf( "Matched root\n");
+        }else{
+            parser->current_ast_node = tree_node_add_last_child( parser->current_ast_node, element );
+            element->tree_node = parser->current_ast_node;
+            //printf( "Matched new element\n");
+        }
+
+        //token_print( current_token );
 
         consume_token( parser, 3 );
 
@@ -379,15 +391,17 @@ static int parse_element_start_tag( xml_parser *parser ){
 static int parse_element_end_tag( xml_parser *parser ){
 
     if(
-        match_token_type(parser, 0, TOKEN_TYPE_END_TAG_OPEN)
+        match_token_type(parser, 0, TOKEN_TYPE_END_TAG_OPEN) &&
+        match_token_type(parser, 1, TOKEN_TYPE_NAME) &&
+        match_token_type(parser, 2, TOKEN_TYPE_GREATER_THAN)
     ){
 
-        if( parser->current_ast_node->parent == NULL ){
+        if( parser->current_ast_node == NULL ){
             error_fatal( "Malformed XML. Too many close tags." );
         }else{
             parser->current_ast_node = parser->current_ast_node->parent;
         }
-        consume_token( parser, 1 );
+        consume_token( parser, 3 );
 
         return TRUE;
 
@@ -468,14 +482,13 @@ static void xml_parser_tokenize_from_file( xml_parser *parser, FILE *file ){
         token *current_token;
         parser->current_token_index = 0;
 
-        xml_element *root_element = malloc( sizeof(xml_element) );
-        wide_char root_name[4] = { 'r', 'o', 'o', 't' };
-        xml_element_create( root_element, root_name, 4 );
-        tree_node_create( parser->ast_root_node, root_element, &xml_element_destory_void );
-        parser->current_ast_node = parser->ast_root_node;
-        root_element->tree_node = parser->ast_root_node;
+        //xml_element *root_element = malloc( sizeof(xml_element) );
+        //wide_char root_name[4] = { 'r', 'o', 'o', 't' };
+        //xml_element_create( root_element, root_name, 4 );
+        //tree_node_create( parser->ast_root_node, root_element, &xml_element_destory_void );
+        //parser->current_ast_node = parser->ast_root_node;
+        //root_element->tree_node = parser->ast_root_node;
 
-        /*
         while( (current_token = array_get_element_at(&parser->tokens, parser->current_token_index)) ){
 
             switch( current_token->type ){
@@ -497,8 +510,10 @@ static void xml_parser_tokenize_from_file( xml_parser *parser, FILE *file ){
 
             consume_token( parser, 1 );
 
+            //printf( "%lu\n", parser->current_token_index );
+            //token_print( current_token );
+
         }
-        */
 
 
 }
@@ -508,7 +523,7 @@ static void print_xml_element( xml_element *element );
 
 static int print_xml_element_by_node( void *node ){
 
-    tree_node *tree_node = *(struct tree_node**)node;
+    tree_node *tree_node = (struct tree_node*)node;
 
     xml_element *element = (xml_element*)tree_node->item;
 
@@ -529,24 +544,20 @@ static void print_xml_element( xml_element *element ){
         printf( "\t" );
     }
 
-    //create a buffer for the utf-8 tag name and zero it out
-        size_t max_length = element->tag_name_length + 1;
-        size_t tag_name_length_in_bytes = max_length * sizeof(wide_char);
-        wide_char *tag_name = malloc( tag_name_length_in_bytes );
-        memset( tag_name, 0, tag_name_length_in_bytes );
+    size_t number_of_children = tree_node_count_children( node );
 
-    //set the tag name (convert from wide characters to utf-8)
-        size_t num_characters_written;
-        num_characters_written = swprintf( tag_name, max_length, L"%s", element->tag_name );
-        tag_name[ element->tag_name_length ] = 0;
+    printf( "<" );
+    fwrite( element->tag_name, sizeof(wide_char), element->tag_name_length, stdout );
+    printf( ">" );
+    if( number_of_children > 0 ){
+        printf( "\n" );
+    }
 
-    //locale must be set to utf-8 for this to work
-        printf("%d\n", num_characters_written );
-    wprintf( L"<%s>\n", tag_name );
         tree_node_visit_children( node, &print_xml_element_by_node );
-    wprintf( L"</%s>\n", tag_name );
 
-    free( tag_name );
+    printf( "</" );
+    fwrite( element->tag_name, sizeof(wide_char), element->tag_name_length, stdout );
+    printf( ">\n" );
 
 }
 
@@ -557,6 +568,7 @@ void xml_parser_parse_from_file( xml_element *xml_element, xml_parser *parser, F
 
     printf( "There are %lu tokens.\n", array_size(&parser->tokens) );
 
+    /*
     token current_token;
     while( array_pop(&parser->tokens, &current_token) ){
 
@@ -564,6 +576,7 @@ void xml_parser_parse_from_file( xml_element *xml_element, xml_parser *parser, F
         token_destroy( &current_token );
 
     }
+    */
 
     xml_element = (struct xml_element*)(parser->ast_root_node->item);
 

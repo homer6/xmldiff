@@ -125,7 +125,7 @@ tree_node *tree_node_visit_children( tree_node *tree_node, int (*visitor_functio
 
     for( x = 0; x < tree_node->children.logical_length; x++ ){
 
-        //could substitue tree_node_get_child_at here
+        //could substitute tree_node_get_child_at here
         current_element = (char *)tree_node->children.elements + tree_node->children.element_size * x;
         current_node = *(struct tree_node**)current_element;
 
