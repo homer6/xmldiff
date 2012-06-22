@@ -3,7 +3,7 @@
 # This file is released under the MIT license, see the COPYING file
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
-OPTIMIZATION?=-O0
+OPTIMIZATION?=-O3
 
 ifeq ($(uname_S),SunOS)
   CFLAGS?=-std=c99 -pedantic $(OPTIMIZATION) -Wall -W -D__EXTENSIONS__ -D_XPG6

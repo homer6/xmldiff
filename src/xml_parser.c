@@ -407,6 +407,27 @@ static int parse_element_end_tag( xml_parser *parser ){
 
     }
 
+
+    //or with an optional whitespace
+    if(
+        match_token_type(parser, 0, TOKEN_TYPE_END_TAG_OPEN) &&
+        match_token_type(parser, 1, TOKEN_TYPE_NAME) &&
+        match_token_type(parser, 2, TOKEN_TYPE_WHITESPACE) &&
+        match_token_type(parser, 3, TOKEN_TYPE_GREATER_THAN)
+    ){
+
+        if( parser->current_ast_node == NULL ){
+            error_fatal( "Malformed XML. Too many close tags." );
+        }else{
+            parser->current_ast_node = parser->current_ast_node->parent;
+        }
+        consume_token( parser, 4 );
+
+        return TRUE;
+
+    }
+
+
     return FALSE;
 
 }
@@ -541,7 +562,7 @@ static void print_xml_element( xml_element *element ){
 
     size_t x;
     for( x = 0; x < depth; x++ ){
-        printf( "\t" );
+        printf( "    " );
     }
 
     size_t number_of_children = tree_node_count_children( node );
@@ -555,6 +576,11 @@ static void print_xml_element( xml_element *element ){
 
         tree_node_visit_children( node, &print_xml_element_by_node );
 
+    if( number_of_children > 0 ){
+        for( x = 0; x < depth; x++ ){
+            printf( "    " );
+        }
+    }
     printf( "</" );
     fwrite( element->tag_name, sizeof(wide_char), element->tag_name_length, stdout );
     printf( ">\n" );
